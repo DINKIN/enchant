@@ -51,6 +51,8 @@ ENCHANT_LT_OBJDIR=$lt_cv_objdir
 AC_SUBST(ENCHANT_LT_OBJDIR)
 
 
+PKG_PROG_PKG_CONFIG
+
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.6 gmodule-2.0])
 
 dnl Extra warnings with GCC and compatible compilers
@@ -261,29 +263,22 @@ AC_SUBST(ISPELL_CFLAGS)
 
 
 dnl Hunspell
-AC_ARG_WITH([hunspell],
-   AS_HELP_STRING([--with-hunspell],
-      [enable the hunspell backend @<:@default=check@:>@]),
-   [],
-   [with_hunspell=check])
+AC_ARG_ENABLE(myspell, AS_HELP_STRING([--disable-myspell],[enable the myspell backend @<:@default=auto@:>@]), build_myspell="$enableval", build_myspell=yes)
 
-hunspell_dir=${datadir}/hunspell
-AC_ARG_WITH([hunspell-dir],
-   AS_HELP_STRING([--with-hunspell-dir=PATH],
-      [path to installed Hunspell dicts]))
-AS_IF([test "x$with_hunspell_dir" != "x"],
-   [hunspell_dir=$with_hunspell_dir])
+AM_CONDITIONAL(WITH_MYSPELL, test "x$build_myspell" = "xyes")
 
-AS_IF([test "x$with_hunspell" != xno],
-   [PKG_CHECK_MODULES([HUNSPELL], [hunspell],
-      [HUNSPELL_CFLAGS="$HUNSPELL_CFLAGS -DENCHANT_HUNSPELL_DICT_DIR='\"$hunspell_dir\"'"
-      with_hunspell=yes],
-      [if test "x$with_hunspell" != xcheck; then
-         AC_MSG_FAILURE([--with-hunspell was given, but test for Hunspell failed])
-       fi
-       with_hunspell=no])])
+myspell_dir=${datadir}/myspell/dicts
+AC_ARG_WITH(myspell-dir, AS_HELP_STRING([--with-myspell-dir=PATH],[path to installed myspell dicts]))
+if test "x$with_myspell_dir" != "x" ; then
+   myspell_dir=$with_myspell_dir
+fi
 
-AM_CONDITIONAL(WITH_HUNSPELL, test "x$with_hunspell" = xyes)
+if test "x$build_myspell" = xyes; then
+   PKG_CHECK_MODULES(MYSPELL, [hunspell])
+   AC_SUBST(MYSPELL_CFLAGS)
+   AC_SUBST(MYSPELL_LIBS)
+   MYSPELL_CFLAGS="$MYSPELL_CFLAGS -DENCHANT_MYSPELL_DICT_DIR='\"$myspell_dir\"'"
+fi
 
 
 dnl Aspell
@@ -466,7 +461,7 @@ src/Makefile
 src/aspell/Makefile
 src/ispell/Makefile
 src/uspell/Makefile
-src/hunspell/Makefile
+src/myspell/Makefile
 src/hspell/Makefile
 src/applespell/Makefile
 src/voikko/Makefile
@@ -493,8 +488,8 @@ $PACKAGE-$VERSION
     Build Ispell backend:                   ${build_ispell}
     Build Uspell backend:                   ${build_uspell}
     Build Hspell backend:                   ${build_hspell}
-    Build Hunspell backend:                 ${with_hunspell}
-    Build Voikko backend:                   ${build_voikko}
+    Build Myspell/Hunspell backend:         ${build_myspell}
+    Build Voikko backend (Linux only):      ${build_voikko}
     Build Zemberek backend:                 ${build_zemberek}
     Build Apple Spell backend (OS X only):  ${build_applespell}"
 
